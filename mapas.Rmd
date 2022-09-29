@@ -1,0 +1,152 @@
+---
+title: "Mapas de casos e óbitos de COVID-19 em gestantes e puérperas"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,message=FALSE)
+```
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE,include=FALSE}
+library(ggplot2)
+#library(highcharter)
+library(viridisLite)
+library(viridis)
+library(geobr)
+library(scales)
+library(plotly)
+
+#data
+library(tidyverse)
+library(summarytools)
+library(gt)
+library(readr)
+library(readxl)
+
+data_birth <- read_excel("dados_nascidos_2019.xlsx")
+
+# covid x não-covid (treino)
+
+dados_modelo <- readRDS("dados_real.rds")
+
+# covid x nao-covid (teste do modelo)
+
+dados <- readRDS("dados_preditos_novo.rds") %>% 
+  mutate(classi_gesta_puerp = droplevels(.$classi_gesta_puerp, except = c(1:4, 6))) %>% 
+  filter(as.Date(DT_SIN_PRI, format = "%d/%m/%Y") >= as.Date("16/02/2020", format = "%d/%m/%Y")) 
+
+# covid real x covid predita
+
+dados_covid <- readRDS("dados_real.rds") %>% 
+  mutate(classi_fin = ifelse(classi_fin == "covid-19", "covid real", "não-covid")) %>% 
+  filter(as.Date(DT_SIN_PRI, format = "%d/%m/%Y") >= as.Date("16/02/2020", format = "%d/%m/%Y")) %>% 
+  filter(classi_fin == "covid real")
+
+dados_aux <- dados %>% 
+  rename(classi_fin = classi_fin_pred) %>% 
+  mutate(classi_fin = ifelse(classi_fin == "covid-19", "covid predita", "não-covid")) %>% 
+  filter(classi_fin == "covid predita")
+
+dados_covid <- full_join(dados_covid, dados_aux) 
+
+states <- read_state(year = 2020)
+```
+
+Abaixo, os mapas de casos e óbitos antes e depois das predições dos casos não especificados. Os dados considerados são das bases de Síndrome Respiratória Aguda Grave (SRAG), do DATASUS, de 2020 a novembro de 2021.
+
+### Casos {.tabset}
+
+#### **ANTES** das predições
+
+```{r, out.width="70%"}
+dados2 <- dados_modelo %>% filter(classi_fin == "covid-19")
+valor <- data.frame(table(dados2$SG_UF))
+colnames(valor) <- c("uf", "n")
+#
+dt11_state <- left_join(valor, data_birth, by= "uf")
+
+dt11_state <- dt11_state %>%
+  mutate(T1 = (n/total)*100000)
+
+states1 <- dplyr::left_join(states, dt11_state, by = c("abbrev_state" = "uf"))
+ggplot(data= states1) +
+  geom_sf(aes(fill=T1), color= "grey30", size=.15) +
+  theme_void()  +
+  labs(fill = "Taxa de casos") +
+  scale_fill_viridis_c(option="magma",direction=-1,limits=c(0,2800))
+
+ggsave("mp1.png")
+```
+
+#### **DEPOIS** das predições
+
+```{r, out.width="70%"}
+valor <- data.frame(table(dados_covid$SG_UF))
+colnames(valor) <- c("uf", "n")
+#
+dt11_state <- left_join(valor, data_birth, by= "uf")
+
+dt11_state <- dt11_state %>%
+  mutate(T1 = (n/total)*100000)
+
+states1 <- dplyr::left_join(states, dt11_state, by = c("abbrev_state" = "uf"))
+ggplot(data= states1) +
+  geom_sf(aes(fill=T1), color= "grey30", size=.15) +
+  theme_void()  +
+  labs(fill = "Taxa de casos") +
+  scale_fill_viridis_c(option="magma",direction=-1,limits=c(0,2800))
+
+ggsave("mp2.png")
+```
+
+### Óbitos {.tabset}
+
+#### **ANTES** das predições
+
+```{r, out.width="70%"}
+d1 <- dados2 %>% #filtro só obitos
+  filter(evolucao=="Obito")
+
+valor <- data.frame(table(d1$SG_UF))
+colnames(valor) <- c("uf", "n")
+
+dt1_state <- left_join(valor, data_birth, by= "uf")
+
+dt1_state <- dt1_state %>%
+  mutate(T1 = (n/total)*100000)
+
+states3 <- dplyr::left_join(states, dt1_state, by = c("abbrev_state" = "uf"))
+
+ggplot(data= states3) +
+  geom_sf(aes(fill=T1), color= "grey30", size=.15) +
+  theme_void()  +
+  labs(fill = "Taxa \n de óbito") +
+  scale_fill_viridis_c(option="magma",direction=-1,limits=c(0,210))
+
+ggsave("mp3.png")
+```
+
+#### **DEPOIS** das predições
+
+```{r, out.width="70%"}
+d3 <- dados_covid %>% 
+  filter(evolucao=="Obito")
+
+valor <- data.frame(table(d3$SG_UF))
+colnames(valor) <- c("uf", "n")
+
+dt1_state <- left_join(valor, data_birth, by= "uf")
+
+dt1_state <- dt1_state %>%
+  mutate(T1 = (n/total)*100000)
+
+states4 <- dplyr::left_join(states, dt1_state, by = c("abbrev_state" = "uf"))
+
+ggplot(data= states4) +
+  geom_sf(aes(fill=T1), color= "grey30", size=.15) +
+  theme_void()  +
+  labs(fill = "Taxa \n de óbito") +
+  scale_fill_viridis_c(option="magma",direction=-1,limits=c(0,210))
+
+ggsave("mp4.png")
+```
