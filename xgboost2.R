@@ -223,6 +223,8 @@ xgb_wf <- workflow() %>%
   add_model(xgb_spec) #%>% 
 #fit(srag_train)
 
+saveRDS(xgb_wf,"wgb_wf.rds")
+
 # Cross-validation --------
 
 set.seed(456)
