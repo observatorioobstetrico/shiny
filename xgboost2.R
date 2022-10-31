@@ -220,10 +220,10 @@ xgb_grid <- grid_max_entropy(
 
 xgb_wf <- workflow() %>%
   add_recipe(xgb_rec) %>%
-  add_model(xgb_spec) #%>% 
-#fit(srag_train)
+  add_model(xgb_spec) %>% 
+  fit(srag_train)
 
-saveRDS(xgb_wf,"wgb_wf.rds")
+saveRDS(xgb_wf,"xgb_wf.rds")
 
 # Cross-validation --------
 
@@ -398,3 +398,5 @@ saveRDS(data_teste,"dados_xgbost_pred.rds")
 #   fmt_number(columns = 2, decimals = 4)
 # 
 # saveRDS(a,"metricas_modelo.rds")
+
+x <- readRDS("tunning_smotenc_ML.rds")

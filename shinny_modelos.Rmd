@@ -1106,10 +1106,10 @@ xgb_rec <- recipes::recipe(classi_fin ~ ., data = dados_treino) %>%
 
 xgb_spec <- parsnip::boost_tree(
   trees = 1000,
-  tree_depth = 2, min_n = 11, 
-  loss_reduction = 0.0882,                     
-  sample_size = 0.476 , mtry = 6,         
-  learn_rate = 0.0582,                         
+  tree_depth = 12, min_n = 29, 
+  loss_reduction = 0.240,                     
+  sample_size = 0.743, mtry = 10,         
+  learn_rate = 0.0131,                         
 ) %>% 
   parsnip::set_engine("xgboost") %>% 
   parsnip::set_mode("classification")
